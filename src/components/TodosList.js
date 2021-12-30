@@ -1,15 +1,20 @@
-import React from 'react'
+import React ,{useContext} from 'react'
+import { AiFillDelete } from 'react-icons/ai';
+import { BsFillPenFill } from "react-icons/bs";
+import { BsBookmarkCheckFill } from "react-icons/bs";
+import {ListContext} from './TodosBox'
 
-const TodosList = ({todoList,deleteTask,editTask,completeTask}) => {
+const TodosList = () => {
+    const value = useContext(ListContext)
     return (
         <>
-            {todoList.map( (task) =>{
+            {value.todoList.map( (task) =>{
                 return (
                     <li data-taskid={task.id}> 
                         <span style = {{textDecoration: task.complete == true ? 'line-through':'none'}} >{task.text}</span>
-                        <button onClick={ (e) => deleteTask(e.target.closest('li').dataset.taskid)}>Delete</button>
-                        <button onClick={ (e) => editTask(e.target.closest('li').dataset.taskid)}>Edit</button>
-                        <button onClick={ (e) => completeTask(e.target.closest('li').dataset.taskid)}>Complete</button>
+                        <button onClick={ (e) => value.deleteTask(e.target.closest('li').dataset.taskid)}><AiFillDelete/></button>
+                        <button onClick={ (e) => value.editTask(e.target.closest('li').dataset.taskid)}><BsFillPenFill/></button>
+                        <button onClick={ (e) => value.completeTask(e.target.closest('li').dataset.taskid)}><BsBookmarkCheckFill/></button>
                     </li>
                 )
             })}

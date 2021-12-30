@@ -1,45 +1,40 @@
-import React , {useState , useEffect} from 'react'
+import React , {useState , useEffect , createContext , useReducer} from 'react'
 import TodosForm from './TodosForm'
 import TodosList from './TodosList'
 import uniqid from 'uniqid'
+import axios from 'axios'
 
-const TodosBox = () => {
+export const ListContext = createContext('')
+
+ const TodosBox = () => {
 
     const [todoList, setTodoList] = useState([])
-
     useEffect(async() =>
     {
     const data = await fetch('http://localhost:3000/task')
     const json = await data.json()
     setTodoList(json)
-    },[todoList])
+    },[])
 
     const addTask = async (text) =>{
-
         //Delete within data base (db.json)
         const taskObj = {text:text , id: uniqid(),complete:false}
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        var requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: JSON.stringify(taskObj)
-        };
-        fetch('http://localhost:3000/task',requestOptions)
+
+        axios.post('http://localhost:3000/task',taskObj)
+        .then(response => console.log(response))
+        .then(()=> setTodoList([...todoList,taskObj]))
+        .catch(err => alert('server error',err))
     }
 
     const deleteTask = (taskId) => {
         const taskObj = todoList.filter((task)=>{
-        if(task.id == taskId)
+        if(task.id != taskId)
         return task
     })
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        var requestOptions = {
-        method: 'DELETE',
-        headers: myHeaders
-        };
-        fetch(`http://localhost:3000/tasK/${taskObj[0].id}`,requestOptions)
+    axios.delete(`http://localhost:3000/task/${taskId}`)
+    .then(response => console.log(response))
+    .then(()=> setTodoList(taskObj))
+    .catch(err => alert('server error',err))
     }
 
     const editTask = (taskId)=>{
@@ -47,21 +42,19 @@ const TodosBox = () => {
         const newText = window.prompt('Edit your Task:',currentText[0].text)
         if(newText.trim() != '')
         {
-           let taskObj = todoList.filter((task)=>{
+           let taskObj = todoList.map((task)=>{
                if(task.id == taskId)
                {
                 task.text = newText
-                return task
                }
+               return task
            })
-           const myHeaders = new Headers();
-           myHeaders.append("Content-Type", "application/json");
-           var requestOptions = {
-           method: 'PATCH',
-           headers: myHeaders,
-           body: JSON.stringify({"text":taskObj[0].text,"complete":false})
-           };
-           fetch(`http://localhost:3000/task/${taskObj[0].id}`,requestOptions)
+           const newList = taskObj.filter(task => task.id == taskId)
+           console.log(newList)
+           axios.put(`http://localhost:3000/task/${taskId}`,newList[0],newList[0].complete = false )
+           .then(response => console.log(response))
+           .then(()=> setTodoList(taskObj))
+           .catch(err => alert('server error',err))
         }
         else
         alert('Enter Text')
@@ -69,36 +62,29 @@ const TodosBox = () => {
 
     }
     const completeTask = (taskId) => {
-            const taskObj = todoList.filter((task)=>{
+            const cTask = todoList.map((task)=>{
                 if(task.id == taskId)
-                {
-                task.complete = !task.complete
+                    task.complete = !task.complete
                 return task
-                }
             })
-
-            const myHeaders = new Headers();
-            myHeaders.append("Content-Type", "application/json");
-            var requestOptions = {
-            method: 'PATCH',
-            headers: myHeaders,
-            body: JSON.stringify({"complete":taskObj[0].complete})
-            };
-            fetch(`http://localhost:3000/task/${taskObj[0].id}`,requestOptions)
-    }
+            const newTask = todoList.filter((task)=> task.id==taskId)
+           
+            axios.put(`http://localhost:3000/task/${taskId}`,newTask[0])
+            // .then(response => console.log(response))
+            .then(()=> setTodoList(cTask))
+            .catch(err => alert('server error',err))
+        }
         return (
             <div>
                 <TodosForm addTask = {addTask}></TodosForm>
-                <TodosList 
-                    todoList = {todoList}
-                    deleteTask={deleteTask}
-                    editTask={editTask}
-                    completeTask ={completeTask}
-                ></TodosList>
+                <ListContext.Provider value={{todoList , deleteTask , editTask , completeTask}}>
+                    <TodosList></TodosList>
+                </ListContext.Provider>
+               
             </div>
         )
-}
+};
+
 
 export default TodosBox
-
 
